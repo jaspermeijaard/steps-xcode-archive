@@ -17,7 +17,6 @@ import (
 	"github.com/bitrise-io/go-utils/fileutil"
 	"github.com/bitrise-io/go-utils/log"
 	"github.com/bitrise-io/go-utils/pathutil"
-	"github.com/bitrise-io/go-utils/sliceutil"
 	"github.com/bitrise-io/go-utils/stringutil"
 	"github.com/bitrise-io/go-xcode/exportoptions"
 	"github.com/bitrise-io/go-xcode/profileutil"
@@ -333,11 +332,6 @@ func main() {
 		fail("Failed to open project: %s: %s", absProjectPath, err)
 	}
 
-	platform, err := utils.BuildableTargetPlatform(xcodeProj, scheme, configuration, utils.XcodeBuild{})
-	if err != nil {
-		fail("Failed to read project platform: %s: %s", absProjectPath, err)
-	}
-
 	mainTarget, err := archivableApplicationTarget(xcodeProj, scheme, configuration)
 	if err != nil {
 		fail("Failed to read main application target: %s", absProjectPath, err)
@@ -393,19 +387,14 @@ func main() {
 	archiveCmd.SetDisableIndexWhileBuilding(cfg.DisableIndexWhileBuilding)
 	archiveCmd.SetArchivePath(tmpArchivePath)
 
-	destination := "generic/platform=" + string(platform)
-	options := []string{"-destination", destination}
+	options := []string{}
 	if cfg.XcodebuildOptions != "" {
 		userOptions, err := shellquote.Split(cfg.XcodebuildOptions)
 		if err != nil {
 			fail("Failed to shell split XcodebuildOptions (%s), error: %s", cfg.XcodebuildOptions)
 		}
 
-		if sliceutil.IsStringInSlice("-destination", userOptions) {
-			options = userOptions
-		} else {
-			options = append(options, userOptions...)
-		}
+		options = userOptions
 	}
 	archiveCmd.SetCustomOptions(options)
 
